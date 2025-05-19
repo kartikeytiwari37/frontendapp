@@ -46,7 +46,7 @@ const HomePage = () => {
       </Row>
       
       <Row>
-        <Col md={6} className="mb-4">
+        <Col md={4} className="mb-4">
           <Card>
             <Card.Header>Bulk Records</Card.Header>
             <Card.Body>
@@ -58,7 +58,7 @@ const HomePage = () => {
           </Card>
         </Col>
         
-        <Col md={6} className="mb-4">
+        <Col md={4} className="mb-4">
           <Card>
             <Card.Header>Interview Records</Card.Header>
             <Card.Body>
@@ -66,6 +66,18 @@ const HomePage = () => {
                 View all interview records, transcripts, and analysis.
               </Card.Text>
               <Button as={Link} to="/interviews" variant="primary" className="mt-2">View Interviews</Button>
+            </Card.Body>
+          </Card>
+        </Col>
+        
+        <Col md={4} className="mb-4">
+          <Card>
+            <Card.Header>Persona Settings</Card.Header>
+            <Card.Body>
+              <Card.Text>
+                Configure AI personas for interview calls.
+              </Card.Text>
+              <Button as={Link} to="/personas" variant="primary" className="mt-2">Manage Personas</Button>
             </Card.Body>
           </Card>
         </Col>

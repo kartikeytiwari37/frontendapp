@@ -10,6 +10,7 @@ import BulkRecordsPage from './pages/BulkRecordsPage';
 import InterviewsPage from './pages/InterviewsPage';
 import BulkRecordDetailPage from './pages/BulkRecordDetailPage';
 import InterviewDetailPage from './pages/InterviewDetailPage';
+import PersonaSettingsPage from './pages/PersonaSettingsPage';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
               <Nav.Link as={Link} to="/bulk-upload" className="text-dark">Bulk Upload</Nav.Link>
               <Nav.Link as={Link} to="/bulk-records" className="text-dark">Bulk Records</Nav.Link>
               <Nav.Link as={Link} to="/interviews" className="text-dark">Interviews</Nav.Link>
+              <Nav.Link as={Link} to="/personas" className="text-dark">Personas</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -48,6 +50,7 @@ function App() {
           <Route path="/bulk-records/:id" element={<BulkRecordDetailPage />} />
           <Route path="/interviews" element={<InterviewsPage />} />
           <Route path="/interviews/:callSid" element={<InterviewDetailPage />} />
+          <Route path="/personas" element={<PersonaSettingsPage />} />
         </Routes>
       </Container>
     </Router>

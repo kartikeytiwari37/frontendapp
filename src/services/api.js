@@ -9,6 +9,10 @@ const api = axios.create({
   },
 });
 
+// Persona Management APIs
+export const getPersonas = () => api.get('/api/personas');
+export const setPersona = (personaData) => api.post('/api/set-persona', personaData);
+
 // Call Management APIs
 export const getPhoneNumbers = () => api.get('/api/numbers');
 export const initiateCall = (callData) => api.post('/api/call', callData);
