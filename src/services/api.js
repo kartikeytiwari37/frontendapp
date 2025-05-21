@@ -20,6 +20,8 @@ export const endCall = (callSid) => api.post('/api/end-call', { callSid });
 export const getTranscript = (callSid) => api.get(`/api/transcript/${callSid}`);
 export const getAnalysis = (callSid) => api.get(`/api/analysis/${callSid}`);
 export const downloadFile = (callSid, type) => api.get(`/api/download/${callSid}?type=${type}`, { responseType: 'blob' });
+export const getInterviewDetails = (callSid) => api.get(`/api/candidateInterviews/search?callSid=${callSid}`);
+export const getRecordingUrl = (callSid) => `${API_BASE_URL}/api/call/${callSid}/recording`;
 export const autoTriggerCall = () => api.post('/api/auto-trigger-call');
 
 // Candidate Management APIs

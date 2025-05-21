@@ -1,28 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Row, Col, Button, Alert, Spinner, Tabs, Tab } from 'react-bootstrap';
-import { getTranscript, getAnalysis, downloadFile } from '../services/api';
+import { getTranscript, getAnalysis, downloadFile, getInterviewDetails, getRecordingUrl } from '../services/api';
 
 const InterviewDetailPage = () => {
   const { callSid } = useParams();
   const [interview, setInterview] = useState({
     transcript: null,
-    analysis: null
+    analysis: null,
+    details: null
   });
   const [loading, setLoading] = useState({
     transcript: true,
-    analysis: true
+    analysis: true,
+    details: true
   });
   const [error, setError] = useState({
     transcript: '',
-    analysis: ''
+    analysis: '',
+    details: ''
   });
   const [activeTab, setActiveTab] = useState('transcript');
+  const [hasRecording, setHasRecording] = useState(false);
 
   useEffect(() => {
     fetchTranscript();
     fetchAnalysis();
+    fetchInterviewDetails();
   }, [callSid]);
+
+  const fetchInterviewDetails = async () => {
+    try {
+      setLoading(prev => ({ ...prev, details: true }));
+      setError(prev => ({ ...prev, details: '' }));
+      
+      const response = await getInterviewDetails(callSid);
+      
+      // Find the interview with matching callSid
+      const interviewDetails = response.data.interviews.find(
+        interview => interview.callSid === callSid
+      );
+      
+      if (interviewDetails) {
+        setInterview(prev => ({ ...prev, details: interviewDetails }));
+        
+        // Check if recording exists
+        setHasRecording(
+          interviewDetails.screeningInfo && 
+          interviewDetails.screeningInfo.recordingId
+        );
+      }
+      
+      setLoading(prev => ({ ...prev, details: false }));
+    } catch (err) {
+      setError(prev => ({ ...prev, details: 'Failed to fetch interview details. Please try again.' }));
+      setLoading(prev => ({ ...prev, details: false }));
+    }
+  };
 
   const fetchTranscript = async () => {
     try {
@@ -94,6 +128,22 @@ const InterviewDetailPage = () => {
               <div className="mb-3">
                 <strong>Call SID:</strong> {callSid}
               </div>
+              {!loading.details && interview.details && (
+                <>
+                  <div className="mb-3">
+                    <strong>Candidate Name:</strong> {interview.details.candidateInfo?.name || 'Unknown'}
+                  </div>
+                  <div className="mb-3">
+                    <strong>Phone Number:</strong> {interview.details.candidateInfo?.phoneNumber || 'Unknown'}
+                  </div>
+                  <div className="mb-3">
+                    <strong>Status:</strong> {interview.details.status}
+                  </div>
+                  <div className="mb-3">
+                    <strong>Date:</strong> {new Date(interview.details.createdAt).toLocaleString()}
+                  </div>
+                </>
+              )}
             </Col>
           </Row>
         </Card.Body>
@@ -168,6 +218,51 @@ const InterviewDetailPage = () => {
                   <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
                     {interview.analysis}
                   </pre>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Tab>
+        {/* New Recording tab */}
+        <Tab 
+          eventKey="recording" 
+          title={
+            <span>
+              Recording {hasRecording && <span className="text-success">✓</span>}
+            </span>
+          }
+        >
+          <Card>
+            <Card.Header>
+              <h4 className="mb-0">Call Recording</h4>
+            </Card.Header>
+            <Card.Body>
+              {loading.details ? (
+                <div className="text-center my-4">
+                  <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : error.details ? (
+                <Alert variant="danger">{error.details}</Alert>
+              ) : !hasRecording ? (
+                <Alert variant="info">No recording available for this call.</Alert>
+              ) : (
+                <div className="recording-player">
+                  <p className="mb-3">Listen to the call recording:</p>
+                  <audio 
+                    controls 
+                    className="w-100" 
+                    src={getRecordingUrl(callSid)}
+                  >
+                    Your browser does not support the audio element.
+                  </audio>
+                  <div className="mt-3">
+                    <small className="text-muted">
+                      Note: The recording is in MP3 format by default. 
+                      For WAV format, <a href={`${getRecordingUrl(callSid)}?format=wav`} target="_blank" rel="noopener noreferrer">click here</a>.
+                    </small>
+                  </div>
                 </div>
               )}
             </Card.Body>
