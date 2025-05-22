@@ -1,23 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Row, Col, Button, Alert, Spinner, Tabs, Tab } from 'react-bootstrap';
-import { getTranscript, getAnalysis, downloadFile, getInterviewDetails, getRecordingUrl } from '../services/api';
+import { 
+  getTranscript, 
+  getAudioTranscript, 
+  getAnalysis, 
+  getAudioAnalysis, 
+  downloadFile, 
+  getInterviewDetails, 
+  getRecordingUrl 
+} from '../services/api';
 
 const InterviewDetailPage = () => {
   const { callSid } = useParams();
   const [interview, setInterview] = useState({
     transcript: null,
+    audioTranscript: null,
     analysis: null,
+    audioAnalysis: null,
     details: null
   });
   const [loading, setLoading] = useState({
     transcript: true,
+    audioTranscript: true,
     analysis: true,
+    audioAnalysis: true,
     details: true
   });
   const [error, setError] = useState({
     transcript: '',
+    audioTranscript: '',
     analysis: '',
+    audioAnalysis: '',
     details: ''
   });
   const [activeTab, setActiveTab] = useState('transcript');
@@ -25,9 +39,51 @@ const InterviewDetailPage = () => {
 
   useEffect(() => {
     fetchTranscript();
+    fetchAudioTranscript();
     fetchAnalysis();
+    fetchAudioAnalysis();
     fetchInterviewDetails();
   }, [callSid]);
+
+  const fetchAudioTranscript = async () => {
+    try {
+      setLoading(prev => ({ ...prev, audioTranscript: true }));
+      setError(prev => ({ ...prev, audioTranscript: '' }));
+      
+      const response = await getAudioTranscript(callSid);
+      
+      setInterview(prev => ({ ...prev, audioTranscript: response.data }));
+      setLoading(prev => ({ ...prev, audioTranscript: false }));
+    } catch (err) {
+      // Don't show error for 404 (no audio transcript yet)
+      if (err.response && err.response.status === 404) {
+        setInterview(prev => ({ ...prev, audioTranscript: null }));
+      } else {
+        setError(prev => ({ ...prev, audioTranscript: 'Failed to fetch audio transcript. Please try again.' }));
+      }
+      setLoading(prev => ({ ...prev, audioTranscript: false }));
+    }
+  };
+
+  const fetchAudioAnalysis = async () => {
+    try {
+      setLoading(prev => ({ ...prev, audioAnalysis: true }));
+      setError(prev => ({ ...prev, audioAnalysis: '' }));
+      
+      const response = await getAudioAnalysis(callSid);
+      
+      setInterview(prev => ({ ...prev, audioAnalysis: response.data }));
+      setLoading(prev => ({ ...prev, audioAnalysis: false }));
+    } catch (err) {
+      // Don't show error for 404 (no audio analysis yet)
+      if (err.response && err.response.status === 404) {
+        setInterview(prev => ({ ...prev, audioAnalysis: null }));
+      } else {
+        setError(prev => ({ ...prev, audioAnalysis: 'Failed to fetch audio analysis. Please try again.' }));
+      }
+      setLoading(prev => ({ ...prev, audioAnalysis: false }));
+    }
+  };
 
   const fetchInterviewDetails = async () => {
     try {
@@ -154,6 +210,113 @@ const InterviewDetailPage = () => {
         onSelect={(k) => setActiveTab(k)}
         className="mb-3"
       >
+        <Tab 
+          eventKey="audioTranscript" 
+          title={
+            <span>
+              Audio Transcript {interview.audioTranscript && <span className="text-success">✓</span>}
+            </span>
+          }
+        >
+          <Card>
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <h4 className="mb-0">Audio Transcript</h4>
+              {!loading.audioTranscript && interview.audioTranscript && (
+                <Button 
+                  variant="outline-primary" 
+                  onClick={() => {
+                    // Create a blob and download it
+                    const blob = new Blob([interview.audioTranscript], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `${callSid}_audio_transcript.txt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                  }}
+                >
+                  Download Audio Transcript
+                </Button>
+              )}
+            </Card.Header>
+            <Card.Body>
+              {loading.audioTranscript ? (
+                <div className="text-center my-4">
+                  <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : error.audioTranscript ? (
+                <Alert variant="danger">{error.audioTranscript}</Alert>
+              ) : !interview.audioTranscript ? (
+                <Alert variant="info">No audio transcript available for this call.</Alert>
+              ) : (
+                <div className="transcript-content">
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+                    {interview.audioTranscript}
+                  </pre>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Tab>
+        
+        <Tab 
+          eventKey="audioAnalysis" 
+          title={
+            <span>
+              Audio Analysis {interview.audioAnalysis && <span className="text-success">✓</span>}
+            </span>
+          }
+        >
+          <Card>
+            <Card.Header className="d-flex justify-content-between align-items-center">
+              <h4 className="mb-0">Audio Analysis</h4>
+              {!loading.audioAnalysis && interview.audioAnalysis && (
+                <Button 
+                  variant="outline-primary" 
+                  onClick={() => {
+                    // Create a blob and download it
+                    const blob = new Blob([interview.audioAnalysis], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `${callSid}_audio_analysis.txt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                  }}
+                >
+                  Download Audio Analysis
+                </Button>
+              )}
+            </Card.Header>
+            <Card.Body>
+              {loading.audioAnalysis ? (
+                <div className="text-center my-4">
+                  <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : error.audioAnalysis ? (
+                <Alert variant="danger">{error.audioAnalysis}</Alert>
+              ) : !interview.audioAnalysis ? (
+                <Alert variant="info">No audio analysis available for this call.</Alert>
+              ) : (
+                <div className="analysis-content">
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+                    {interview.audioAnalysis}
+                  </pre>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Tab>
         <Tab eventKey="transcript" title="Transcript">
           <Card>
             <Card.Header className="d-flex justify-content-between align-items-center">

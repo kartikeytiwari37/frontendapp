@@ -120,6 +120,8 @@ const InterviewsPage = () => {
                     <th>Date</th>
                     <th>Transcript</th>
                     <th>Analysis</th>
+                    <th>Audio Transcript</th>
+                    <th>Audio Analysis</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -150,6 +152,20 @@ const InterviewsPage = () => {
                       </td>
                       <td>
                         {interview.screeningInfo?.analysis ? (
+                          <span className="text-success">✓</span>
+                        ) : (
+                          <span className="text-danger">✗</span>
+                        )}
+                      </td>
+                      <td>
+                        {interview.screeningInfo?.transcriptionFromAudio ? (
+                          <span className="text-success">✓</span>
+                        ) : (
+                          <span className="text-danger">✗</span>
+                        )}
+                      </td>
+                      <td>
+                        {interview.screeningInfo?.analysisFromAudio ? (
                           <span className="text-success">✓</span>
                         ) : (
                           <span className="text-danger">✗</span>
