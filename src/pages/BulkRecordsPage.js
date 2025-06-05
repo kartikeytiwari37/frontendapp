@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Form, Button, Alert, Spinner, Pagination } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { getBulkRecords, autoTriggerCall } from '../services/api';
+import { getBulkRecords, autoTriggerCall, initiateCall, getPhoneNumbers } from '../services/api';
 
 const BulkRecordsPage = () => {
   const [records, setRecords] = useState([]);
@@ -13,6 +13,8 @@ const BulkRecordsPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [autoTriggerLoading, setAutoTriggerLoading] = useState(false);
+  const [callLoading, setCallLoading] = useState({});
+  const [phoneNumbers, setPhoneNumbers] = useState([]);
 
   // Status options
   const statusOptions = [
@@ -26,6 +28,20 @@ const BulkRecordsPage = () => {
   useEffect(() => {
     fetchRecords();
   }, [status, page]);
+
+  // Fetch phone numbers on component mount
+  useEffect(() => {
+    const fetchPhoneNumbers = async () => {
+      try {
+        const response = await getPhoneNumbers();
+        setPhoneNumbers(response.data);
+      } catch (err) {
+        console.error('Failed to fetch phone numbers:', err);
+      }
+    };
+
+    fetchPhoneNumbers();
+  }, []);
 
   const fetchRecords = async () => {
     try {
@@ -69,6 +85,34 @@ const BulkRecordsPage = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to auto-trigger call. Please try again.');
       setAutoTriggerLoading(false);
+    }
+  };
+
+  const handleIndividualCall = async (record) => {
+    try {
+      setCallLoading(prev => ({ ...prev, [record.id]: true }));
+      setError('');
+      setSuccess('');
+
+      // Prepare call data
+      const callData = {
+        number: record.phoneNumber,
+        fromNumber: phoneNumbers.length > 0 ? phoneNumbers[0].phoneNumber : '',
+        name: record.name,
+        location: record.location,
+        product: record.product
+      };
+
+      const response = await initiateCall(callData);
+      
+      setSuccess(`Call initiated successfully for ${record.name}! Call SID: ${response.data.callSid}`);
+      setCallLoading(prev => ({ ...prev, [record.id]: false }));
+      
+      // Refresh records after initiating a call
+      fetchRecords();
+    } catch (err) {
+      setError(err.response?.data?.error || `Failed to initiate call for ${record.name}. Please try again.`);
+      setCallLoading(prev => ({ ...prev, [record.id]: false }));
     }
   };
 
@@ -126,6 +170,12 @@ const BulkRecordsPage = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
       
+      {phoneNumbers.length === 0 && (
+        <Alert variant="warning">
+          No phone numbers available for making calls. Please configure Twilio phone numbers first.
+        </Alert>
+      )}
+      
       <Card>
         <Card.Header>
           Bulk Records ({totalRecords})
@@ -177,12 +227,29 @@ const BulkRecordsPage = () => {
                         )}
                       </td>
                       <td>
-                        <Link 
-                          to={`/bulk-records/${record.id}`}
-                          className="btn btn-sm btn-primary"
-                        >
-                          View Details
-                        </Link>
+                        <div className="d-flex gap-2">
+                          <Link 
+                            to={`/bulk-records/${record.id}`}
+                            className="btn btn-sm btn-primary"
+                          >
+                            View Details
+                          </Link>
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => handleIndividualCall(record)}
+                            disabled={callLoading[record.id] || !record.phoneNumber || phoneNumbers.length === 0}
+                          >
+                            {callLoading[record.id] ? (
+                              <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                                <span className="ms-1">Calling...</span>
+                              </>
+                            ) : (
+                              '📞 Call'
+                            )}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
